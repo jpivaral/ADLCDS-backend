@@ -1,0 +1,10 @@
+services:
+  db:
+    image: mysql:latest
+    environment:
+      MYSQL_USER: adlcds_usr
+      MYSQL_RANDOM_ROOT_PASSWORD: 1
+      MYSQL_PASSWORD: adlcds_usr
+      MYSQL_DATABASE: adlcds_db
+    ports:
+      - '3306:3306'

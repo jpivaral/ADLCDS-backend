@@ -1,0 +1,20 @@
+databaseChangeLog:
+  - changeSet:
+      id: 00001-01
+      author: jpivaral
+      context: Create new Post table
+      changes:
+        - createTable:
+            tableName: post
+            columns:
+              - column:
+                  name: post_id
+                  type: int
+                  constraints:
+                    primaryKey: true
+                  autoIncrement: true
+              - column:
+                  name: description
+                  type: varchar(500)
+                  constraints:
+                    nullable: false

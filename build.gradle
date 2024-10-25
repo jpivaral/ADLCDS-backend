@@ -1,0 +1,124 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.3.5'
+	id 'io.spring.dependency-management' version '1.1.6'
+	id 'jacoco'
+	id 'checkstyle'
+	id 'de.undercouch.download' version '5.6.0'
+	id "com.star-zero.gradle.githook" version '1.2.1'
+	id "org.sonarqube" version '5.1.0.4882'
+}
+
+group = 'com.pivaral'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.liquibase:liquibase-core'
+	compileOnly 'org.projectlombok:lombok'
+	runtimeOnly 'com.mysql:mysql-connector-j'
+	annotationProcessor 'org.projectlombok:lombok'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+	finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+	reports {
+		html.required.set(true)
+		xml.required.set(true)
+	}
+	dependsOn test
+}
+
+jacoco {
+	toolVersion = "0.8.9"
+}
+
+jacocoTestCoverageVerification {
+	violationRules {
+		rule {
+			element = 'CLASS'
+			limit {
+				minimum = 0.95
+			}
+		}
+	}
+}
+
+String checkstyleFilePath = "${project.projectDir}/checkstyle.xml"
+
+tasks.register('checkCheckstyleExists') {
+	doLast {
+		def file = new File("$checkstyleFilePath")
+		if (!file.exists()) {
+			download.run {
+				//src 'https://raw.githubusercontent.com/checkstyle/checkstyle/refs/heads/master/src/main/resources/google_checks.xml'
+				src 'https://raw.githubusercontent.com/checkstyle/checkstyle/refs/heads/master/src/main/resources/sun_checks.xml'
+				dest "$checkstyleFilePath"
+			}
+		}
+	}
+}
+
+checkstyle {
+	toolVersion = '10.18.2'
+	configFile  = file(checkstyleFilePath)
+	ignoreFailures = false
+	maxWarnings = 0
+}
+
+tasks.withType(Checkstyle).configureEach {
+	reports {
+		html.required = true
+	}
+}
+
+githook {
+	failOnMissingHooksDir = true
+	createHooksDirIfNotExist = true
+	hooks {
+		"pre-push" {
+			task = "clean build checkstyleMain checkstyleTest test"
+		}
+	}
+}
+
+sonar {
+	properties {
+		property("sonar.organization", "adlcds")
+		property("sonar.host.url", System.getenv('SONAR_URL'))
+		property("sonar.projectKey", "adlcds-backend")
+		property("sonar.login", System.getenv('SONAR_KEY'))
+		property("sonar.coverage.exclusions", ["**/AdlcdsBackendApplication.java"])
+		property("sonar.java.coveragePlugin", "jacoco")
+	}
+}
+
+jar{
+	enabled=false
+}
+
+check.dependsOn 'checkCheckstyleExists', 'jacocoTestCoverageVerification', 'sonar'

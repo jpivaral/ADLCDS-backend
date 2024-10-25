@@ -1,0 +1,11 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/adlcds_db?enabledTLSProtocols=TLSv1.2
+    username: adlcds_usr
+    password: adlcds_usr
+    driverClassName: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 4
+      minimum-idle: 1
+  jpa:
+    show-sql: true
